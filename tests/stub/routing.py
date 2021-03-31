@@ -633,6 +633,14 @@ class Routing(TestkitTestCase):
         S: IGNORED
         """
 
+    def get_connection_script(self):
+        return """
+        !: BOLT #VERSION#
+        !: AUTO HELLO
+        !: AUTO GOODBYE
+        !: AUTO RESET
+        """
+
     def get_vars(self):
         host = self._routingServer1.host
         v = {
@@ -681,15 +689,21 @@ class Routing(TestkitTestCase):
 
     def test_should_successfully_get_routing_table_with_context(self):
         # TODO remove this block once all languages work
-        if get_driver_name() in ['dotnet', 'go', 'python', 'javascript']:
+        if get_driver_name() in ['dotnet', 'go', 'python']:
             self.skipTest("needs verifyConnectivity support")
         driver = Driver(self._backend, self._uri, self._auth, self._userAgent)
         self._routingServer1.start(script=self.router_script(), vars=self.get_vars())
+
+        if get_driver_name() in ['javascript']:
+            self._readServer1.start(script=self.get_connection_script(), vars=self.get_vars())
 
         driver.verifyConnectivity()
         driver.close()
 
         self._routingServer1.done()
+
+        if get_driver_name() in ['javascript']:
+            self._readServer1.done()
 
     # Checks that routing is used to connect to correct server and that
     # parameters for session run is passed on to the target server
@@ -1077,7 +1091,7 @@ class Routing(TestkitTestCase):
 
     def test_should_fail_discovery_when_router_fails_with_procedure_not_found_code(self):
         # TODO add support and remove this block
-        if get_driver_name() in ['python', 'javascript', 'go', 'dotnet']:
+        if get_driver_name() in ['python', 'go', 'dotnet']:
             self.skipTest("verifyConnectivity not implemented in backend")
         driver = Driver(self._backend, self._uri, self._auth, self._userAgent)
         self._routingServer1.start(script=self.router_script_with_procedure_not_found_failure(), vars=self.get_vars())
@@ -1096,7 +1110,7 @@ class Routing(TestkitTestCase):
 
     def test_should_fail_discovery_when_router_fails_with_unknown_code(self):
         # TODO add support and remove this block
-        if get_driver_name() in ['python', 'javascript', 'go', 'dotnet']:
+        if get_driver_name() in ['python', 'go', 'dotnet']:
             self.skipTest("verifyConnectivity not implemented in backend")
         driver = Driver(self._backend, self._uri, self._auth, self._userAgent)
         self._routingServer1.start(script=self.router_script_with_unknown_failure(), vars=self.get_vars())
@@ -1398,7 +1412,7 @@ class Routing(TestkitTestCase):
 
     def test_should_use_initial_router_for_discovery_when_others_unavailable(self):
         # TODO add support and remove this block
-        if get_driver_name() in ['python', 'javascript', 'go', 'dotnet']:
+        if get_driver_name() in ['python', 'go', 'dotnet']:
             self.skipTest("verifyConnectivity not implemented in backend")
         driver = Driver(self._backend, self._uri, self._auth, self._userAgent)
         self._routingServer1.start(script=self.router_script_with_another_router_and_fake_reader(),
@@ -1510,7 +1524,7 @@ class Routing(TestkitTestCase):
 
     def test_should_accept_routing_table_without_writers_and_then_rediscover(self):
         # TODO add support and remove this block
-        if get_driver_name() in ['python', 'javascript', 'go', 'dotnet']:
+        if get_driver_name() in ['python', 'go', 'dotnet']:
             self.skipTest("verifyConnectivity not implemented in backend")
         driver = Driver(self._backend, self._uri, self._auth, self._userAgent)
         self._routingServer1.start(script=self.router_script_with_empty_writers(), vars=self.get_vars())
@@ -1861,7 +1875,7 @@ class Routing(TestkitTestCase):
 
     def test_should_successfully_acquire_rt_when_router_ip_changes(self):
         # TODO remove this block once all languages work
-        if get_driver_name() in ['dotnet', 'go', 'python', 'javascript']:
+        if get_driver_name() in ['dotnet', 'go', 'python']:
             self.skipTest("needs verifyConnectivity support")
         ip_addresses = []
         if platform == "linux":
